@@ -31,7 +31,8 @@ module.exports = new function() {
 		{name: "imageLoadEvent", timeout: 10000},
 		{name: "tabWindowNull"},
 		{name: "deleteCorrectRowIndex", timeout: 3000},
-		{name: "childrenArrayEmpty"}
+		{name: "childrenArrayEmpty"},
+		{name: "imageViewImage", timeout: 40000}
 	]
 
 	// https://appcelerator.lighthouseapp.com/projects/32238-titanium-mobile/tickets/2583
@@ -542,4 +543,48 @@ module.exports = new function() {
 
 		finish(testRun);
 	}
+        
+        Ti.include('countPixels.js');
+        this.imageViewImage = function(testRun) {
+            
+            // Load image and verify it's loaded by checking the
+            // canvas. The image has 5000 green pixels and
+            // 4900 blue pixels and size 100x100.
+            
+            var cp = new CountPixels();
+            var imgString = 'suites/ui/images/image.png'; 
+            
+            var win = Ti.UI.createWindow({
+                backgroundColor: '#FFFFFF',
+                width: 200,
+                height: 200
+            });
+            
+            var image = Ti.UI.createImageView({
+              backgroundColor: '#000000',
+              width: 100,
+              height: 100
+            });
+            
+            var onImageViewCompleteBluePx = function(count){
+                valueOf(testRun, count).shouldBeEqual(4900);
+                win.close();
+                finish(testRun);
+            }
+            
+            var onImageViewCompleteGreenPx = function(count){
+                valueOf(testRun, count).shouldBeEqual(5000);
+                cp.countPixels([0, 0, 255], win, onImageViewCompleteBluePx);
+            }
+            
+            //Set image to imageView
+            image.setImage(imgString);
+            
+            win.addEventListener('postlayout', function(){
+                cp.countPixels([0, 255, 0], win, onImageViewCompleteGreenPx);
+            });
+            
+            win.add(image);
+            win.open();
+        }
 }
